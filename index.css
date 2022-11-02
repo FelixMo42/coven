@@ -29,7 +29,6 @@ body {
 
 select {
     display: flex;
-    flex: 1;
     background: none;
     border: none;
     border-bottom: 1px solid #f9f5ec;
@@ -72,4 +71,19 @@ select {
 
 #parts div:hover {
     text-decoration-line: underline;
+}
+
+.vd {
+    margin: 0px 5px;
+}
+
+input {
+    background: none;
+    border: none;
+    border-bottom: 1px solid #f9f5ec;
+    margin-left: 5px;    
+}
+
+.hidden {
+    display: none;
 }

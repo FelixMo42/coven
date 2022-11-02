@@ -1,116 +1,86 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.13.0/firebase-app.js'
-import { getFirestore, getDocs, getDoc, doc, collection } from 'https://www.gstatic.com/firebasejs/9.13.0/firebase-firestore.js'
+import { deleteField } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-firestore.js";
+import { select, get, setChildren, useCollection, useDocument, setDocument, addDocument } from "./lib.js"
 
-const app = initializeApp({
-    apiKey: "AIzaSyAwtEjjtCX8l4vw9s12hzT7fhYIHYEtf0w",
-    authDomain: "coven-191a0.firebaseapp.com",
-    projectId: "coven-191a0",
-    storageBucket: "coven-191a0.appspot.com",
-    messagingSenderId: "166090112479",
-    appId: "1:166090112479:web:c9313c64c357f44ced986a"
-});
+const chars = new Map()
 
-const db = getFirestore(app)
+function getPartName(part) {
+    return part.char ? chars.get(part.char).name : part.name
+}
 
-function useCollection(name, callback) {
-    useName(name, async split => {
-        const snapshot = await getDocs(collection(db, ...split))
-        callback(snapshot.docs.map((doc) => [doc.id, doc.data()]))
+useCollection("rooms", setChildren("rooms", ([id, room]) => {
+    let el = document.createElement("option")
+    el.value = id
+    el.innerHTML = room.name
+    return el
+}))
+
+useCollection("chars", setChildren("chars", ([id, char]) => {
+    chars.set(id, char)
+
+    let el = document.createElement("option")
+    el.value = id
+    el.innerHTML = char.name
+    return el
+}))
+
+useCollection(`rooms.#room.parts`, setChildren("parts", ([id, part]) => {
+    let el = document.createElement("li")
+    el.innerHTML = getPartName(part)
+    el.onclick = () => select(["part", id])
+    return el 
+}))
+
+const partTypeEl = document.getElementById("part-type")
+const partNameEl = document.getElementById("part-name")
+const partCharEl = document.getElementById("part-char")
+
+partNameEl.oninput = () => setDocument('rooms.#room.parts.#part', { name: partNameEl.value })
+
+partCharEl.onchange = () => setDocument('rooms.#room.parts.#part', { char: partCharEl.value })
+
+partTypeEl.onchange = () => setDocument('rooms.#room.parts.#part',
+    partTypeEl.value === "char" ? {
+        name: deleteField(),
+        char: get("#char")
+    } : {
+        name: "",
+        char: deleteField()
+    }
+)
+
+useDocument(`rooms.#room.parts.#part`, (part) => {
+    if (part.char) {
+        partTypeEl.value = "char"
+        partCharEl.style.display = "flex"
+        partNameEl.style.display = "none"
+    } else {
+        partTypeEl.value = "misc"
+        
+        partNameEl.style.display = "flex"
+        partCharEl.style.display = "none"
+    }
+    
+    partNameEl.value = getPartName(part)
+}, () => {
+    partTypeEl.value = "misc"
+    partNameEl.style.display = "none"
+    partCharEl.style.display = "none"
+})
+
+document.getElementById("rooms").onchange = () =>
+    select(
+        ["room", document.getElementById("rooms").value],
+        ["part", null]
+    )
+
+document.getElementById("chars").onchange = () =>
+    select(
+        ["char", document.getElementById("chars").value]
+    )
+
+
+document.getElementById('add-part').onclick = () => {
+    addDocument("rooms.#room.parts", {
+        name: ""
     })
 }
-
-async function useDocument(name, callback) {
-    useName(name, async split => {
-        const snapshot = await getDoc(doc(db, ...split))
-        callback(snapshot.docs.map((doc) => [doc.id, doc.data()])) 
-    })
-}
-
-function useName(name, cb) {
-    function isValid(split) {
-        return split.every((part) => typeof part === "string")
-    }
-
-    function isEqual(a, b) {
-        return a.length === b.length && a.every((val, index) => val === b[index])
-    }
-
-    let oldSplit = []
-
-    function self() {
-        let newSplit = name.split(".").map((part) =>
-            part.charAt(0) === "#"
-                ? refs.get(part.substring(1))
-                : part
-        )
-
-        if (isValid(newSplit) && !isEqual(newSplit, oldSplit)) {
-            oldSplit = newSplit
-            cb(oldSplit)
-        }
-    }
-
-    cbs.push(self)
-
-    self()
-}
-
-function setChildren(id, callback) {
-    const root = document.getElementById(id)
-    return (pairs) => {
-        root.replaceChildren(...pairs.map(callback))
-        if (root.onchange) {
-            root.onchange(root.children[0].value)
-        }
-    }
-}
-
-let refs = new Map()
-let cbs = []
-
-function select(...changes) {
-    for (let [name, value] of changes) {
-        refs.set(name, value)
-    }
-    cbs.forEach((cb) => cb(changes))
-}
-
-async function main() {
-    useCollection("rooms", setChildren("rooms", ([id, room]) => {
-        let el = document.createElement("option")
-        el.value = id
-        el.innerHTML = room.name
-        return el
-    }))
-
-    useCollection("chars", setChildren("chars", ([id, char]) => {
-        let el = document.createElement("option")
-        el.value = id
-        el.innerHTML = char.name
-        return el
-    }))
-
-    useCollection(`rooms.#room.parts`, setChildren("parts", ([id, part]) => {
-        let el = document.createElement("div")
-        el.innerHTML = part.name
-        el.onclick = () => select(["part", id])
-        return el 
-    }))
-
-    // useDocument(`rooms.#room.parts.#part`, () => {
-
-    // })
-
-    document.getElementById("rooms").onchange = () =>
-        select(
-            ["room", document.getElementById("rooms").value],
-            ["part", null]
-        )
-
-    document.getElementById("chars").onchange = () =>
-        select(
-            ["char", document.getElementById("chars").value]
-        )
-}
-
-main()
