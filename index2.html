@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>coven</title>
+
+        <!-- <link rel="stylesheet" href="./index.css" /> -->
+
+        <style>
+            body {
+                height: 100vh;
+            }
+
+            #graph {
+                width: 100%;
+                height: 100%;
+            }
+
+            .node {
+                width: 200px;
+                height: 100px;
+                background-color: rgba(230, 230, 230);
+                position: fixed;
+                z-index: 1;
+            }
+
+            .path {
+                position: fixed;
+                background-color: black;
+                transform-origin: 0% 50%;
+                height: 3px;
+                z-index: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="graph">
+
+        </div>
+    
+        <script>
+            let nodes = [
+                {
+                    id: 0,
+                    text: "bla",
+                    paths: [1, 2],
+                    x: 0,
+                    y: 0
+                },
+                {
+                    id: 1,
+                    text: "bla",
+                    paths: [],
+                    x: 0,
+                    y: 200
+                },
+                {
+                    id: 2,
+                    text: "bla",
+                    paths: [],
+                    x: 0,
+                    y: 400
+                },
+                
+            ]
+
+            const graph = document.querySelector("#graph")
+
+            function* draw() {
+                for (const node of nodes) {
+                    yield NodeView({
+                        node,
+                    })
+
+                    for (let path of node.paths) {
+                        yield PathView({
+                            a: node,
+                            b: nodes[path]
+                        })
+                    }
+                }
+            }
+
+            const NODE_WIDTH = 200
+            const NODE_HEIGHT = 100
+
+            function angle(x1, y1, x2, y2) {
+                return Math.atan2(y2 - y1, x2 - x1)
+            }
+
+            function dist(x1, y1, x2, y2) {
+                return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+            }
+
+            function PathView({ a, b }) {
+                const view = document.createElement("div")
+
+                view.className = "path"
+
+                let x1 = a.x + NODE_WIDTH / 2
+                let y1 = a.y + NODE_HEIGHT - 3
+
+                let x2 = b.x + NODE_WIDTH / 2
+                let y2 = b.y
+
+                view.style.top = `${y1}px`
+
+                view.style.left = `${x1}px`
+                view.style.width = `${dist(x1, y1, x2, y2)}px`
+
+                view.style.transform = `rotate(${angle(x1, y1, x2, y2)}rad)`
+
+                view.style.path = `path()`
+
+                return view
+            }
+
+            function NodeView({ node }) {
+                const view = document.createElement("div")
+
+                view.className = "node"
+                view.innerHTML = node.text
+
+                view.style.left = `${node.x}px`
+                view.style.top = `${node.y}px`
+
+                view.onmousedown = (e) => {
+                    drag.isDrag = true
+
+                    let ox = node.x - e.x
+                    let oy = node.y - e.y
+
+                    drag.onmove = (e) => {
+                        node.x = e.x + ox
+                        node.y = e.y + oy
+                        update()
+                    }
+
+                    drag.ondone = (e) => {
+                    }
+                }
+
+                return view
+            }
+
+            function update() {
+                graph.replaceChildren(...draw())
+            }
+
+            const drag = {}
+
+            graph.onmousemove = (e) => {
+                if (drag.isDrag) {
+                    drag.onmove(e)
+                }
+            }
+
+            graph.onmouseup = (e) => {
+                if (drag.isDrag) {
+                    drag.isDrag = false
+                    drag.ondone(e)
+                    update()
+                }
+            }
+
+            update()
+        </script>
+    </body>
+</html>
