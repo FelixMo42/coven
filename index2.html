@@ -45,6 +45,8 @@
                 flex-direction: column;
                 display: flex;
                 padding: 2px;
+                z-index: 2;
+                background-color: gray;
             }
 
             #author {
@@ -70,14 +72,23 @@
             .box {
                 margin: 2px;
                 padding: 10px;
-                border: 2px solid black;
+                background-color: white;
             }
 
             .button {
                 margin: 2px;
                 padding: 10px;
                 text-align: center;
-                border: 2px solid black;
+                background-color: white;
+            }
+
+            #paths {
+                display: flex;
+                flex-direction: column;
+            }
+
+            #paths div {
+                white-space: pre-line;
             }
         </style>
     </head>
@@ -94,6 +105,8 @@
                 </div>
 
                 <span class="button" onclick="addResponse()">ADD RESPONSE</span>
+
+                <div id="paths"></div>
             </div>
         </div>
     
@@ -178,9 +191,9 @@
                 let x2 = b.x + NODE_WIDTH / 2
                 let y2 = b.y
 
-                view.style.top = `${y1}px`
+                view.style.top = `${y1 + camera.y}px`
 
-                view.style.left = `${x1}px`
+                view.style.left = `${x1 + camera.x}px`
                 view.style.width = `${dist(x1, y1, x2, y2)}px`
 
                 view.style.transform = `rotate(${angle(x1, y1, x2, y2)}rad)`
@@ -191,15 +204,34 @@
             }
 
             function select(node) {
+                // select element
                 selected = node.id
 
+                // set values
                 document.getElementById("author").value = node.author
                 document.getElementById("body").value = node.text
 
-                // expand it
+                // expand textarea
                 bodyView.style.height = "0px"
                 bodyView.style.height = bodyView.scrollHeight + "px"
 
+                // add paths
+                function* getChildren() {
+                    for (const id of node.paths) {
+                        const doc = document.createElement("div")
+                        doc.className = "box"
+                        doc.innerHTML = `<b>${nodes[id].author}</b>\n${nodes[id].text}`
+                        doc.onclick = () => {
+                            select(nodes[id])
+                        }
+                        yield doc
+                    }
+                }
+                document.getElementById("paths").replaceChildren(...getChildren())
+
+
+
+                // update graph
                 update()
             }
 
@@ -227,8 +259,8 @@
                 view.className = "node"
                 view.innerHTML = `<b>${node.author}</b>\n${node.text}`
 
-                view.style.left = `${node.x}px`
-                view.style.top = `${node.y}px`
+                view.style.left = `${node.x + camera.x}px`
+                view.style.top = `${node.y + camera.y}px`
                 view.style.border = selected == node.id ? '1px blue solid' : 'none'
 
                 view.onmousedown = (e) => {
@@ -249,6 +281,8 @@
                     mouse.onclick = (e) => {
                         select(node)
                     }
+
+                    e.stopPropagation()
                 }
 
                 return view
@@ -259,6 +293,26 @@
             }
 
             const mouse = {}
+            const camera = { x: 0, y: 0 }
+
+            graph.onmousedown = (e) => {
+                mouse.isDown = true
+
+                let ox = camera.x - e.x
+                let oy = camera.y - e.y
+
+                mouse.onmove = (e) => {
+                    camera.x = e.x + ox
+                    camera.y = e.y + oy
+                    update()
+                }
+
+                mouse.ondone = (e) => {
+                }
+
+                mouse.onclick = (e) => {   
+                }
+            }
 
             graph.onmousemove = (e) => {
                 if (mouse.isDown) {
