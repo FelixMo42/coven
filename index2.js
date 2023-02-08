@@ -5,8 +5,8 @@ let nodes = [
         author: "Vincent",
         text: "",
         paths: [],
-        x: 10,
-        y: 10
+        x: 25,
+        y: 25
     }
 ]
 
@@ -31,8 +31,8 @@ function addResponse() {
         author: "Vincent",
         text: "",
         paths: [],
-        x: Math.max(...node.paths.map(id => getNode(id).x + 225), node.x),
-        y: node.y + 125
+        x: Math.max(...node.paths.map(id => getNode(id).x + NODE_WIDTH + 25), node.x),
+        y: node.y + NODE_HEIGHT + 25
     })
 
     node.paths.push(new_id)
@@ -59,8 +59,8 @@ function* draw() {
 
 let selected = 0;
 
-const NODE_WIDTH = 200
-const NODE_HEIGHT = 100
+const NODE_WIDTH = 125
+const NODE_HEIGHT = 75
 
 function angle(x1, y1, x2, y2) {
     return Math.atan2(y2 - y1, x2 - x1)
@@ -143,6 +143,9 @@ function NodeView({ node }) {
             }
 
             mouse.ondone = (e) => {
+                node.x = (e.x + ox) - (e.x + ox) % 25 + 25 / 2
+                node.y = (e.y + oy) - (e.y + oy) % 25 + 25 / 2
+                update()
             }
 
             mouse.onclick = (e) => {
