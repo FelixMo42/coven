@@ -32,6 +32,10 @@
                 overflow: hidden;
             }
 
+            .node:focus {
+                background-color: rgba(230, 230, 200);
+            }
+
             .path {
                 position: fixed;
                 background-color: black;
@@ -126,30 +130,28 @@
 
             function goToParent() {
                 for (const node of nodes) {
-                    if (node.paths.includes(nodes[selected].id)) {
+                    if (node.paths.includes(getNode(selected).id)) {
                         return select(node)
                     }
                 }
             }
 
             function addResponse() {
-                let node = nodes[selected]
+                let node = getNode(selected)
                 let new_id = nodes.length
-
-                console.log(Math.max(node.paths.map(id => nodes[id].x + 225)))
 
                 nodes.push({
                     id: new_id,
                     author: "Vincent",
                     text: "",
                     paths: [],
-                    x: Math.max(...node.paths.map(id => nodes[id].x + 225), node.x),
+                    x: Math.max(...node.paths.map(id => getNode(id).x + 225), node.x),
                     y: node.y + 125
                 })
 
                 node.paths.push(new_id)
 
-                select(nodes[new_id])
+                select(getNode(new_id))
             }
 
             function* draw() {
@@ -161,7 +163,7 @@
                     for (let path of node.paths) {
                         yield PathView({
                             a: node,
-                            b: nodes[path]
+                            b: getNode(path)
                         })
                     }
                 }
@@ -220,25 +222,25 @@
                     for (const id of node.paths) {
                         const doc = document.createElement("div")
                         doc.className = "box"
-                        doc.innerHTML = `<b>${nodes[id].author}</b>\n${nodes[id].text}`
+                        doc.innerHTML = `<b>${getNode(id).author}</b>\n${getNode(id).text}`
                         doc.onclick = () => {
-                            select(nodes[id])
+                            select(getNode(id))
                         }
                         yield doc
                     }
                 }
                 document.getElementById("paths").replaceChildren(...getChildren())
 
-
-
                 // update graph
                 update()
+
+                document.getElementById(node.id).focus()
             }
 
             const bodyView = document.getElementById("body");
             bodyView.oninput = (e) => {
                 // save the new value
-                nodes[selected].text = bodyView.value
+                getNode(selected).text = bodyView.value
 
                 // expand it
                 bodyView.style.height = "0px"
@@ -249,12 +251,26 @@
             }
 
             document.getElementById("author").oninput = (e) => {
-                nodes[selected].author = document.getElementById("author").value
+                getNode(selected).author = document.getElementById("author").value
                 update()
+            }
+
+            function getNode(id) {
+                return nodes.find(node => node.id == id)
+            }
+
+            function removeNode(node) {
+                nodes.splice(nodes.findIndex(n => n.id == node.id), 1)
+                for (const n of nodes) {
+                    n.paths = n.paths.filter((id) => id != node.id)
+                }
             }
 
             function NodeView({ node }) {
                 const view = document.createElement("div")
+
+                view.id = node.id
+                view.tabIndex = node.id
 
                 view.className = "node"
                 view.innerHTML = `<b>${node.author}</b>\n${node.text}`
@@ -263,24 +279,47 @@
                 view.style.top = `${node.y + camera.y}px`
                 view.style.border = selected == node.id ? '1px blue solid' : 'none'
 
-                view.onmousedown = (e) => {
-                    mouse.isDown = true
-
-                    let ox = node.x - e.x
-                    let oy = node.y - e.y
-
-                    mouse.onmove = (e) => {
-                        node.x = e.x + ox
-                        node.y = e.y + oy
+                view.onkeydown = (e) => {
+                    if (e.key == "Backspace") {
+                        goToParent()
+                        removeNode(node)
                         update()
                     }
+                }
 
-                    mouse.ondone = (e) => {
-                    }
+                view.onmousedown = (e) => {
+                    mouse.isDown = true
+                    
+                    if (e.shiftKey) {
+                        mouse.onclick = (e) => {
+                            if (getNode(selected).paths.includes(node.id)) {
+                                getNode(selected).paths.splice(
+                                    getNode(selected).paths.findIndex(({id}) => id == node.id),
+                                    1
+                                )
+                            } else {
+                                getNode(selected).paths.push(node.id)
+                            }
+                            update()
+                        } 
+                    } else {
 
-                    mouse.onclick = (e) => {
-                        select(node)
-                    }
+                        let ox = node.x - e.x
+                        let oy = node.y - e.y
+
+                        mouse.onmove = (e) => {
+                            node.x = e.x + ox
+                            node.y = e.y + oy
+                            update()
+                        }
+
+                        mouse.ondone = (e) => {
+                        }
+
+                        mouse.onclick = (e) => {
+                            select(node)
+                        }
+                }
 
                     e.stopPropagation()
                 }
@@ -289,11 +328,19 @@
             }
 
             function update() {
+                let id = document.activeElement.id
+
                 graph.replaceChildren(...draw())
+
+                if (id) {
+                    document.getElementById(id).focus()
+                }
             }
+
 
             const mouse = {}
             const camera = { x: 0, y: 0 }
+
 
             graph.onmousedown = (e) => {
                 mouse.isDown = true
@@ -335,8 +382,7 @@
                 }
             }
 
-            select(nodes[0])
-            update()
+            select(getNode(0))
         </script>
     </body>
 </html>
