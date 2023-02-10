@@ -3,12 +3,14 @@
     <head>
         <title>coven</title>
 
-        <!-- <link rel="stylesheet" href="./index.css" /> -->
-
         <style>
             body {
                 height: 100vh;
                 margin: 0px;
+            }
+
+            * {
+                font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
             }
 
             #root {
@@ -45,72 +47,70 @@
             }
 
             #editor {
-                width: 600px;
+                width: 400px;
                 flex-direction: column;
                 display: flex;
-                padding: 2px;
+                padding: 15px;
                 z-index: 2;
-                background-color: gray;
+                background-color: rgba(10, 10, 10);
+                font-size: 18px;
             }
 
-            #author {
+            .author {
                 border: none;
                 resize: none;
                 font-weight: bold;
-            }
-
-            #body {
+                background: none;
+                color: white;
+                font-size: 18px;
                 width: 100%;
-                box-sizing: border-box;
-                display: flex;
-                border: none;
-                resize: none;
-                margin: 0px;
             }
 
-            #body:focus {
+            .author:focus {
                 border: none;
                 outline: none;
             }
 
-            .box {
-                margin: 2px;
-                padding: 10px;
-                background-color: white;
+            .author:autofill {
+                font-size: 18px;
             }
 
-            .button {
-                margin: 2px;
-                padding: 10px;
-                text-align: center;
-                background-color: white;
+            .text {
+                width: 100%;
+                color: white;
+                font-size: 18px;
+                white-space: pre-line; 
+                margin-left: 10px;
+                margin-bottom: 15px;
             }
 
-            #paths {
-                display: flex;
-                flex-direction: column;
+            .text:focus {
+                border: none;
+                outline: none;
             }
 
-            #paths div {
-                white-space: pre-line;
+            .option {
+                color: white;
+            }
+
+            .back {
+                color: white;
+                padding-bottom: 15px;
             }
         </style>
     </head>
     <body>
+        <datalist id="chars">
+            <option value="Phage" />
+            <option value="Vincent" />
+            <option value="Admiral Ash" />
+            <option value="Helgi" />
+        </datalist>
+
         <div id="root">
             <div id="graph">
             </div>
             <div id="editor">
-                <div class="button" onclick="goToParent()">GO TO PARENT</div>
-
-                <div class="box">
-                    <input id="author" />
-                    <textarea id="body"></textarea>
-                </div>
-
-                <span class="button" onclick="addResponse()">ADD RESPONSE</span>
-
-                <div id="paths"></div>
             </div>
         </div>
     
