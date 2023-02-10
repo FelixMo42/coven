@@ -185,7 +185,7 @@ function NodeView({ node }) {
             mouse.onclick = (e) => {
                 if (getNode(selected).paths.includes(node.id)) {
                     getNode(selected).paths.splice(
-                        getNode(selected).paths.findIndex(({id}) => id == node.id),
+                        getNode(selected).paths.findIndex((id) => id == node.id),
                         1
                     )
                 } else {
