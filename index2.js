@@ -85,13 +85,12 @@ function goToParent() {
     }
 }
 
-function addResponse() {
-    let node = getNode(selected)
+function addResponse(node) {
     let new_id = crypto.randomUUID()
 
     nodes.push({
         id: new_id,
-        author: "Vincent",
+        author: player,
         text: "",
         paths: [],
         x: Math.max(...node.paths.map(id => getNode(id).x + NODE_WIDTH + 25), node.x),
@@ -232,6 +231,16 @@ function BackAreaView() {
     return view
 }
 
+function ConvoView(node) {
+    const view = document.createElement("div")
+    view.replaceChildren(
+        AuthorView(node),
+        TextView(node),
+        AddButton(node) 
+    )
+    return view 
+}
+
 function AuthorView(node) {
     const view = document.createElement("input")
     view.className = "author"
@@ -298,6 +307,14 @@ function OptionView(i, node) {
     return view
 }
 
+function AddButton(node) {
+    const view = document.createElement("div")
+    view.className = "add"
+    view.innerHTML = "+"
+    view.onclick = () => addResponse(node)
+    return view
+}
+
 function select(node) {
     // select element
     selected = node.id
@@ -307,9 +324,7 @@ function select(node) {
         let paths = node.paths
 
         if (paths.length == 1 && getNode(paths[0]).author !== player) {
-            yield AuthorView(getNode(paths[0]))
-            yield TextView(getNode(paths[0]))
-
+            yield ConvoView(getNode(paths[0]))
             yield *getChildren(getNode(paths[0]))
         } else {
             for (const i in paths) {
@@ -320,9 +335,8 @@ function select(node) {
 
     document.getElementById("editor").replaceChildren(
         BackAreaView(),
-        AuthorView(node),
-        TextView(node),
-        ...getChildren(node)
+        ConvoView(node),
+        ...getChildren(node),
     )
 
     // update graph
